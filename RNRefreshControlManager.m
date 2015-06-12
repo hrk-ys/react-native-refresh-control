@@ -21,7 +21,6 @@
 
 - (dispatch_queue_t)methodQueue {
     return self.bridge.uiManager.methodQueue;
-//    return self.bridge.uiManager.methodQueue;
 }
 
 RCT_EXPORT_MODULE()
@@ -31,23 +30,29 @@ RCT_EXPORT_METHOD(configure:(NSNumber *)reactTag
                   options:(NSDictionary *)options
                   callback:(RCTResponseSenderBlock)callback) {
     [self.bridge.uiManager addUIBlock:^(RCTUIManager *uiManager, RCTSparseArray *viewRegistry) {
-        
+
         UIView *view = viewRegistry[reactTag];
         if (!view) {
             RCTLogError(@"Cannot find view with tag #%@", reactTag);
             return;
         }
 
-        
+
         UIScrollView *scrollView = ((RCTScrollView *)view).scrollView;
 
         UIColor *tintColor = options[@"tintColor"];
         NSString* title = options[@"title"];
-        
+        UIColor *titleColor = options[@"titleColor"];
+
         UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
         if (tintColor) refreshControl.tintColor = [RCTConvert UIColor:tintColor];
-        if (title)     refreshControl.attributedTitle = [[NSAttributedString alloc] initWithString:title];
-        
+        if (title && titleColor) {
+            NSDictionary *attrs = @{ NSForegroundColorAttributeName : [RCTConvert UIColor:titleColor] };
+            refreshControl.attributedTitle = [[NSAttributedString alloc] initWithString:title attributes:attrs];
+        } else if (title) {
+            refreshControl.attributedTitle = [[NSAttributedString alloc] initWithString:title];
+        }
+
         [refreshControl addTarget:self action:@selector(dropViewDidBeginRefreshing:) forControlEvents:UIControlEventValueChanged];
 
         refreshControl.tag = [reactTag integerValue]; // Maybe something better
@@ -60,17 +65,17 @@ RCT_EXPORT_METHOD(configure:(NSNumber *)reactTag
 
 RCT_EXPORT_METHOD(endRefreshing:(NSNumber *)reactTag) {
     [self.bridge.uiManager addUIBlock:^(RCTUIManager *uiManager, RCTSparseArray *viewRegistry) {
-        
+
         UIView *view = viewRegistry[reactTag];
         if (!view) {
             RCTLogError(@"Cannot find view with tag #%@", reactTag);
             return;
         }
-        
+
         UIScrollView *scrollView = ((RCTScrollView *)view).scrollView;
-        
+
         UIRefreshControl *refreshControl = (UIRefreshControl *)[scrollView viewWithTag:[reactTag integerValue]];
-        
+
         dispatch_async(dispatch_get_main_queue(), ^{
             [refreshControl endRefreshing];
         });

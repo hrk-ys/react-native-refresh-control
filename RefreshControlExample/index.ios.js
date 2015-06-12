@@ -6,7 +6,11 @@
 
 var React = require('react-native');
 var TimerMixin = require('react-timer-mixin');
-var RefreshControl = require('react-native-refresh-control');
+var {
+  RefreshableListView,
+  RefreshableScrollView,
+} = require('react-native-refresh-control');
+
 var {
   AppRegistry,
   ListView,
@@ -17,8 +21,6 @@ var {
   NavigatorIOS,
 } = React;
 
-var SCROLLVIEW = 'ScrollView';
-var LISTVIEW = 'ListView';
 
 var RefreshControlExample = React.createClass({
   mixins: [TimerMixin],
@@ -29,40 +31,24 @@ var RefreshControlExample = React.createClass({
     };
   },
 
-  componentDidMount: function() {
-
-    // ScrollView
-    RefreshControl.configure({
-      node: this.refs[SCROLLVIEW],
-      tintColor: '#05A5D1',
-      activityIndicatorViewColor: '#05A5D1'
-    }, () => {
-      this.setTimeout(() => {
-        RefreshControl.endRefreshing(this.refs[SCROLLVIEW]);
-      }, 2000);
-    });
-
-    // ListView
-    RefreshControl.configure({
-      node: this.refs[LISTVIEW]
-    }, () => {
-      this.setTimeout(() => {
-        RefreshControl.endRefreshing(this.refs[LISTVIEW]);
-      }, 2000);
-    });
-  },
-
   render: function() {
     return (
       <View style={styles.container}>
-        <ScrollView ref={SCROLLVIEW} style={styles.scrollView}>
+        <RefreshableScrollView
+          style={styles.scrollView}
+          onRefresh={ () => {
+            return new Promise((resolve, reject) => {
+              setTimeout(resolve, 2000);
+            })
+          }}
+          >
           <View style={{backgroundColor: '#05A5D1', height: 200}} />
           <View style={{backgroundColor: '#FDF3E7', height: 200}} />
           <View style={{backgroundColor: '#484848', height: 200}} />
-        </ScrollView>
+        </RefreshableScrollView>
 
-        <ListView
-          ref={LISTVIEW}
+
+        <RefreshableListView
           style={styles.listView}
           dataSource={this.state.dataSource}
           renderRow={(rowData) => {
@@ -71,7 +57,16 @@ var RefreshControlExample = React.createClass({
               <View style={{backgroundColor: color, height: 200}} />
             );
           }}
-        />
+          onRefresh={ () => {
+            return new Promise((resolve, reject) => {
+              setTimeout(resolve, 2000);
+            })
+          }}
+          refreshDescription='Refresh'
+          refreshTintColor={'red'}
+          refreshTitleColor={'red'}
+          />
+
       </View>
     );
   }
